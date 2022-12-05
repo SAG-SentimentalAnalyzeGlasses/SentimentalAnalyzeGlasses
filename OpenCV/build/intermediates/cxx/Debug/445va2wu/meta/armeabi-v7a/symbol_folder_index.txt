@@ -1,0 +1,1 @@
+C:\Users\rush_\AndroidStudioProjects\SentimentAnalyzer__new\OpenCV\build\intermediates\cxx\Debug\445va2wu\obj\armeabi-v7a

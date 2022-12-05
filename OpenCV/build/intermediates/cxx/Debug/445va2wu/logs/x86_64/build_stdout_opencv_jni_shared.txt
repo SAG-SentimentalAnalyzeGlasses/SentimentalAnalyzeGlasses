@@ -1,0 +1,2 @@
+ninja: Entering directory `C:\Users\rush_\AndroidStudioProjects\SentimentAnalyzer__new\OpenCV\.cxx\Debug\445va2wu\x86_64'
+ninja: no work to do.

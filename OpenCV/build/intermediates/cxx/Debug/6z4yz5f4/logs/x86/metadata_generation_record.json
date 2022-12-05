@@ -1,0 +1,44 @@
+[
+  {
+    "level_": 0,
+    "message_": "Start JSON generation. Platform version: 21 min SDK version: x86",
+    "file_": "C:\\Users\\rush_\\AndroidStudioProjects\\SentimentAnalyzer\\OpenCV\\libcxx_helper\\CMakeLists.txt",
+    "tag_": "debug|x86",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": -1720138839
+  },
+  {
+    "level_": 0,
+    "message_": "JSON \u0027C:\\Users\\rush_\\AndroidStudioProjects\\SentimentAnalyzer\\OpenCV\\.cxx\\Debug\\6z4yz5f4\\x86\\android_gradle_build.json\u0027 was up-to-date",
+    "file_": "C:\\Users\\rush_\\AndroidStudioProjects\\SentimentAnalyzer\\OpenCV\\libcxx_helper\\CMakeLists.txt",
+    "tag_": "debug|x86",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 306933835
+  },
+  {
+    "level_": 0,
+    "message_": "JSON generation completed without problems",
+    "file_": "C:\\Users\\rush_\\AndroidStudioProjects\\SentimentAnalyzer\\OpenCV\\libcxx_helper\\CMakeLists.txt",
+    "tag_": "debug|x86",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": -1928249674
+  }
+]

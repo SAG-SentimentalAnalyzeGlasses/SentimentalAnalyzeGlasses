@@ -1,0 +1,1 @@
+C:\Users\rush_\AndroidStudioProjects\SentimentAnalyzer__new\OpenCV\build\intermediates\cxx\RelWithDebInfo\444a246t\obj\x86
