@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.Button;
 
 import org.opencv.android.OpenCVLoader;
-
+//imae - check for git connect
 public class MainActivity extends AppCompatActivity {
     static {
         if(OpenCVLoader.initDebug()){
