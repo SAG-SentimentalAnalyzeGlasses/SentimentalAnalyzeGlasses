@@ -1,0 +1,4 @@
+/Users/hyegyunyim/Library/Android/sdk/cmake/3.18.1/bin/ninja \
+  -C \
+  /Users/hyegyunyim/AndroidStudioProjects/SAG/OpenCV/.cxx/Debug/381q723q/arm64-v8a \
+  opencv_jni_shared
