@@ -117,8 +117,8 @@ public class facialExpressionRecognition {
             float emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
             Log.d("facial_expression", "Output: " + emotion_v);
             String emotion_s = get_emotion_text(emotion_v);
-            Imgproc.putText(mat_image, emotion_s + " (" + emotion_v + ")",
-                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y + 20), 1, 1.5, new Scalar(0, 0, 255, 150), 2);
+            Imgproc.putText(mat_image, emotion_s  + " (" + emotion_v + ")",
+                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y - 20), 1, 2, new Scalar(0, 0, 255, 150), 2);
         }
 
         // rotaate mat_image -90 degree
