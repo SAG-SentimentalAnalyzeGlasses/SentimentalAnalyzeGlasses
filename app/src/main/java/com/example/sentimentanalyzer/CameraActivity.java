@@ -5,8 +5,12 @@ import static android.Manifest.permission.RECORD_AUDIO;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -19,6 +23,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -31,6 +36,8 @@ import org.opencv.core.Mat;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -47,9 +54,53 @@ public class CameraActivity extends Activity {
     private Intent intent;
     private CameraBridgeViewBase mOpenCvCameraView;
     private EditText editText;
+    private ImageView imageView;
     private Button button;
     private SpeechRecognizer mRecognizer = SpeechRecognizer.createSpeechRecognizer(CameraActivity.this); // 새 SpeechRecognizer 를 만드는 팩토리 메서드
     private BackgroundThread mThread;
+
+    /*usb camera*/
+//    UsbDevice usbDevice = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+
+    /*기기 열거*/
+//    UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+//
+//    HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+//    UsbDevice device = deviceList.get("deviceName");
+//
+//
+//    Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+//    while(deviceIterator.hasNext()){
+//        UsbDevice device = deviceIterator.next();
+//        //your code
+//    }
+
+
+    /*엑세스 권한 런타임*/
+    private static final String ACTION_USB_PERMISSION =
+            "com.android.example.USB_PERMISSION";
+    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (ACTION_USB_PERMISSION.equals(action)) {
+                synchronized (this) {
+                    UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+
+                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                        if(device != null){
+                            //call method to set up device communication
+                        }
+                    }
+                    else {
+                        Log.v(LOGTAG, "permission denied for device " + device);
+                    }
+                }
+            }
+        }
+    };
+
+
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -72,11 +123,14 @@ public class CameraActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getSupportActionBar().setIcon(R.drawable.sag);
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
 //        boolean havePermission = true;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
 //                havePermission = false;
             }
             if (checkSelfPermission(RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -96,8 +150,19 @@ public class CameraActivity extends Activity {
 //                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET, Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA},PERMISSION);
 //        }
 
+        /*usb 카메라*/
+//        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+//        private static final String ACTION_USB_PERMISSION =
+//                "com.android.example.USB_PERMISSION";
+//
+//        permissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+//        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+//        registerReceiver(usbReceiver, filter);
+
+
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.opencv_surface_view);
         editText = findViewById(R.id.textResult);
+        imageView = findViewById(R.id.imageView);
         button = findViewById(R.id.recordBtn);
 //        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -115,7 +180,12 @@ public class CameraActivity extends Activity {
         // RecognizerIntent 생성
         intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,getPackageName()); // 여분의 키
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag()); // 언어 설정
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag()); // 언어 설정
+        }
+
+        //감정 이모지 변경
+
 
         // 버튼 클릭 시 객체에 Context와 listener를 할당
         button.setOnClickListener(new View.OnClickListener() {
@@ -125,7 +195,7 @@ public class CameraActivity extends Activity {
                     mRecognizer.startListening(intent); // 듣기 시작
 
                     recording = true;
-                    button.setText("중지");
+                    button.setText("Stop");
                     // 화면 켜짐 유지
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -146,7 +216,7 @@ public class CameraActivity extends Activity {
 
     private void StopRecord() {
         recording = false;
-        button.setText("시작");
+        button.setText("Analyze Emotion");
         // 화면 켜짐 유지 끄기
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -268,7 +338,9 @@ public class CameraActivity extends Activity {
             mRgba=inputFrame.rgba();
             mGray=inputFrame.gray();
 
-            mRgba = facialExpressionRecognition.recognizeImage(mRgba);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                mRgba = facialExpressionRecognition.recognizeImage(mRgba);
+            }
             return mRgba;
 
         }

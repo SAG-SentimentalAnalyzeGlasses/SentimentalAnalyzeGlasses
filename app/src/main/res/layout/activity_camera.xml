@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/sag_green"
     tools:context=".MainActivity">
 
     <org.opencv.android.JavaCameraView
@@ -21,10 +22,25 @@
         android:layout_height="wrap_content"
         android:text=""
         app:layout_constraintBottom_toTopOf="@id/recordBtn" />
-    <Button
+
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/recordBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="시작"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:background="@drawable/button_shape"
+        android:textAllCaps="false"
+        android:text="Analyze Emotion"
+        android:textSize="30dp"
+        android:textColor="@color/sag_yellow"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="10dp"/>
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="170dp"
+        tools:layout_editor_absoluteY="381dp"
+        tools:srcCompat="@drawable/none" />
 </androidx.constraintlayout.widget.ConstraintLayout>
