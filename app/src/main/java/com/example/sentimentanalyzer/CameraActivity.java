@@ -1,12 +1,15 @@
 package com.example.sentimentanalyzer;
 
 import static android.Manifest.permission.CAMERA;
+import static android.Manifest.permission.RECORD_AUDIO;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -18,19 +21,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,19 +34,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-public class CameraActivity extends AppCompatActivity {
+public class CameraActivity extends Activity {
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 200;
+    private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 201;
     private static String LOGTAG = "OpenCV_Log";
     private facialExpressionRecognition facialExpressionRecognition;
     private Mat mRgba;
     private Mat mGray;
     private boolean recording = false;
+    private ArrayList<Float> faceRecognitionResult = new ArrayList<Float>();
 
     private Intent intent;
     private CameraBridgeViewBase mOpenCvCameraView;
     private EditText editText;
     private Button button;
     private SpeechRecognizer mRecognizer = SpeechRecognizer.createSpeechRecognizer(CameraActivity.this); // 새 SpeechRecognizer 를 만드는 팩토리 메서드
+    private BackgroundThread mThread;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -75,12 +74,15 @@ public class CameraActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 //        boolean havePermission = true;
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
-        requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
 //                havePermission = false;
-//            }
-//        }
+            }
+            if (checkSelfPermission(RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
+            }
+        }
 //        if (havePermission) {
 //            onCameraPermissionGranted();
 //        }
@@ -126,9 +128,17 @@ public class CameraActivity extends AppCompatActivity {
                     button.setText("중지");
                     // 화면 켜짐 유지
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+
+                    editText.setText("");
+                    faceRecognitionResult.clear();
+                    mThread = new BackgroundThread();
+                    mThread.start();
                 } else {  //이미 녹음 중이면 녹음 중지
                     mRecognizer.cancel();
                     StopRecord();
+
+                    mThread.interrupt(); // stop UI update
                 }
             }
         });
@@ -226,7 +236,7 @@ public class CameraActivity extends AppCompatActivity {
                 newText += matches.get(i);
             }
 
-            editText.setText(originText + newText + " ");	//기존의 text에 인식 결과를 이어붙임
+//            editText.setText(originText + newText + " ");	//기존의 text에 인식 결과를 이어붙임
             mRecognizer.startListening(intent);    //녹음버튼을 누를 때까지 계속 녹음해야 하므로 녹음 재개
         }
 
@@ -324,5 +334,42 @@ public class CameraActivity extends AppCompatActivity {
             onCameraPermissionGranted();
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+
+    // thread for update UI
+    class BackgroundThread extends Thread {
+        @Override
+        public void run() {
+            while(!Thread.currentThread().isInterrupted()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        float emotion_v = facialExpressionRecognition.get_emotion_value();
+
+                        if (emotion_v == 0.0) {
+                            faceRecognitionResult.clear();
+                        } else {
+                            faceRecognitionResult.add(facialExpressionRecognition.get_emotion_value());
+
+                            if (faceRecognitionResult.size() > 5) {
+                                float result_average = 0;
+                                for (int i = 0; i < faceRecognitionResult.size(); i++) {
+                                    result_average += faceRecognitionResult.get(i);
+                                }
+                                result_average /= faceRecognitionResult.size();
+
+                                editText.setText(editText.getText() + "\n" + facialExpressionRecognition.get_emotion_text(result_average) + " " + result_average);
+
+                                faceRecognitionResult.clear();
+                            }
+                        }
+                    }
+                });
+
+                SystemClock.sleep(200);
+            }
+            faceRecognitionResult.clear();
+        }
     }
 }

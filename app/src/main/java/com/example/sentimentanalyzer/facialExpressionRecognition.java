@@ -37,6 +37,7 @@ public class facialExpressionRecognition {
     private int width = 0;
     private GpuDelegate gpuDelegate = null;
     private CascadeClassifier cascadeClassifier;
+    float emotion_v;
 
     facialExpressionRecognition(AssetManager assetManager, Context context, String modelPath, int inputSize) throws IOException {
         INPUT_SIZE = inputSize;
@@ -114,7 +115,7 @@ public class facialExpressionRecognition {
 
             float[][] emotion = new float[1][1];
             interpreter.run(byteBuffer, emotion);
-            float emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
+            emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
             Log.d("facial_expression", "Output: " + emotion_v);
             String emotion_s = get_emotion_text(emotion_v);
             Imgproc.putText(mat_image, emotion_s + " (" + emotion_v + ")",
@@ -127,7 +128,7 @@ public class facialExpressionRecognition {
         return mat_image;
     }
 
-    private String get_emotion_text(float emotion_v) {
+    public String get_emotion_text(float emotion_v) {
         String val = "";
         if (emotion_v >= 0 & emotion_v < 1.5) {
             val = "Surprise";
@@ -175,5 +176,13 @@ public class facialExpressionRecognition {
         long startOffset = assetFileDescriptor.getStartOffset();
         long declaredLength = assetFileDescriptor.getDeclaredLength();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+    }
+
+    public float get_emotion_value() {
+        return emotion_v;
+    }
+
+    public String get_emotion_text() {
+        return get_emotion_text(emotion_v);
     }
 }
