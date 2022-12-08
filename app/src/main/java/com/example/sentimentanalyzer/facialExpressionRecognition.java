@@ -1,24 +1,35 @@
 package com.example.sentimentanalyzer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Image;
+import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
+import android.widget.ImageView;
+
+import androidx.annotation.RequiresApi;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.gpu.GpuDelegate;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,6 +48,7 @@ public class facialExpressionRecognition {
     private int width = 0;
     private GpuDelegate gpuDelegate = null;
     private CascadeClassifier cascadeClassifier;
+    private float emotion_v;
 
     facialExpressionRecognition(AssetManager assetManager, Context context, String modelPath, int inputSize) throws IOException {
         INPUT_SIZE = inputSize;
@@ -81,6 +93,7 @@ public class facialExpressionRecognition {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public Mat recognizeImage(Mat mat_image) {
         // rotaate it by 90 degree for proper prediction
         Core.flip(mat_image.t(), mat_image, 1);
@@ -114,18 +127,35 @@ public class facialExpressionRecognition {
 
             float[][] emotion = new float[1][1];
             interpreter.run(byteBuffer, emotion);
-            float emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
+            emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
             Log.d("facial_expression", "Output: " + emotion_v);
             String emotion_s = get_emotion_text(emotion_v);
-            Imgproc.putText(mat_image, emotion_s + " (" + emotion_v + ")",
-                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y + 20), 1, 1.5, new Scalar(0, 0, 255, 150), 2);
+            Imgproc.putText(mat_image, emotion_s  + " (" + emotion_v + ")",
+                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y - 20), 1, 2, new Scalar(0, 0, 255, 150), 2);
+
+
+            // 이미지 추가 예시)  img = cv2.add(img1, img2)
+//            String imgpath = "src/main/res/drawable/soso.png";
+//            Bitmap bm = BitmapFactory.decodeFile(imgpath);
+//            Mat emotion_result = new Mat();
+//            Utils.bitmapToMat(bm, emotion_result);
+
+
+
+
+//            Core.add(mat_image, emotion_result, mat_image);
+
         }
 
         // rotaate mat_image -90 degree
         Core.flip(mat_image.t(), mat_image, 0);
 
+
+
         return mat_image;
     }
+
+
 
     private String get_emotion_text(float emotion_v) {
         String val = "";
@@ -175,5 +205,13 @@ public class facialExpressionRecognition {
         long startOffset = assetFileDescriptor.getStartOffset();
         long declaredLength = assetFileDescriptor.getDeclaredLength();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+    }
+
+    public float get_emotion_value() {
+        return emotion_v;
+    }
+
+    public String get_emotion_text() {
+        return get_emotion_text(emotion_v);
     }
 }
