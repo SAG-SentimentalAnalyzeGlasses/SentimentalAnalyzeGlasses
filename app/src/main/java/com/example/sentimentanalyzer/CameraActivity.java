@@ -131,13 +131,13 @@ public class CameraActivity extends AppCompatActivity {
 
 //        boolean havePermission = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
+//            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
 //                havePermission = false;
-            }
-            if (checkSelfPermission(RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
-            }
+//            }
+//            if (checkSelfPermission(RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+//                requestPermissions(new String[]{RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
+//            }
         }
 //        if (havePermission) {
 //            onCameraPermissionGranted();
