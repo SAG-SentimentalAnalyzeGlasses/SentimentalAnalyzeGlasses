@@ -26,6 +26,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
@@ -41,7 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-public class CameraActivity extends Activity {
+public class CameraActivity extends AppCompatActivity {
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 200;
     private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 201;
     private static String LOGTAG = "OpenCV_Log";
@@ -128,9 +130,9 @@ public class CameraActivity extends Activity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
 //        boolean havePermission = true;
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
-        requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
 //                havePermission = false;
             }
             if (checkSelfPermission(RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
