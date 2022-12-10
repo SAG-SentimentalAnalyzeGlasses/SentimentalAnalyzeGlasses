@@ -52,6 +52,7 @@ import org.opencv.core.Mat;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -282,19 +283,38 @@ public class CameraActivity extends AppCompatActivity {
         leftAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                if (value >= 0 & value < 2.0) {
-                    return "T.T";
-                } else if (value >= 2.0 & value < 3.5) {
-                    return "-_-";
+                if (value >= 0 & value < 1.5) {
+                    return "Surprise😲";
+                } else if (value >= 0.5 & value < 1.5) {
+                    return "Fear😨";
+                } else if (value >= 1.5 & value < 2.5) {
+                    return "Angry😠";
+                } else if (value >= 2.5 & value < 3.5) {
+                    return "Neutral😐";
+                } else if (value >= 3.5 & value < 4.5) {
+                    return "Sad😢";
+                } else if (value >= 4.5 & value < 5.5) {
+                    return "Disgust😫";
                 } else {
-                    return "^o^";
+                    return "Happy😄";
                 }
+
+//                if (value < 2.0) {
+//                    return "😭";
+//                } else if (value >= 2.0 & value < 3.0) {
+//                    return "-_-😭";
+//                } else {
+//                    return "^o^😭";
+//                }
             }
         });
+        leftAxis.setGranularity(1.2f);
         leftAxis.setEnabled(true);
         leftAxis.setTextColor(Color.BLACK);
-        leftAxis.setDrawGridLines(false);
-        leftAxis.setGridColor(getResources().getColor(R.color.sag_green));
+        leftAxis.setTextSize(10f);
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridLineWidth(0.5f);
+        leftAxis.setGridColor(getResources().getColor(R.color.sag_white));
 
         YAxis rightAxis = chart.getAxisRight();
         rightAxis.setEnabled(false);
@@ -325,7 +345,7 @@ public class CameraActivity extends AppCompatActivity {
         // let the chart know it's data has changed
         chart.notifyDataSetChanged();
 
-        chart.setVisibleXRangeMaximum(20);
+        chart.setVisibleXRangeMaximum(30);
         // this automatically refreshes the chart (calls invalidate())
         chart.moveViewTo(data.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
     }
