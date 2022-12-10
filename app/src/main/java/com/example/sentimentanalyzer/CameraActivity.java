@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
@@ -28,6 +29,19 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
@@ -36,6 +50,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,6 +75,9 @@ public class CameraActivity extends AppCompatActivity {
     private Button button;
     private SpeechRecognizer mRecognizer = SpeechRecognizer.createSpeechRecognizer(CameraActivity.this); // 새 SpeechRecognizer 를 만드는 팩토리 메서드
     private BackgroundThread mThread;
+
+    //Graph
+    private LineChart chart;
 
     /*usb camera*/
 //    UsbDevice usbDevice = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -214,7 +232,121 @@ public class CameraActivity extends AppCompatActivity {
                 }
             }
         });
+
+        chart = (LineChart) findViewById(R.id.LineChart);
+        chart.setDrawGridBackground(true);
+        chart.setBackgroundColor(getResources().getColor(R.color.sag_green));
+        chart.setGridBackgroundColor(getResources().getColor(R.color.sag_green));
+        // description text
+        chart.getDescription().setEnabled(true);
+        Description des = chart.getDescription();
+        des.setEnabled(true);
+        des.setText("Emotion");
+        des.setTextSize(15f);
+        des.setTextColor(getResources().getColor(R.color.teal_200));
+
+
+        // touch gestures (false-비활성화)
+        chart.setTouchEnabled(false);
+
+        // scaling and dragging (false-비활성화)
+        chart.setDragEnabled(true);
+        chart.setScaleEnabled(true);
+
+        //auto scale
+        chart.setAutoScaleMinMaxEnabled(false);
+
+        // if disabled, scaling can be done on x- and y-axis separately
+        chart.setPinchZoom(true);
+
+        //X축
+        XAxis x1 = chart.getXAxis();
+        x1.setDrawGridLines(false);
+        x1.setDrawAxisLine(false);
+        x1.setTextColor(getResources().getColor(R.color.sag_green));
+        x1.setTextSize(1f);
+        x1.setAvoidFirstLastClipping(true);
+
+        x1.setEnabled(true);
+
+        //Legend
+        Legend l = chart.getLegend();
+        l.setEnabled(true);
+        l.setFormSize(10f); // set the size of the legend forms/shapes
+        l.setTextSize(12f);
+        l.setTextColor(getResources().getColor(R.color.teal_200));
+
+        //Y축
+        YAxis leftAxis = chart.getAxisLeft();
+//        leftAxis.setValueFormatter(new MyYAxisValueFormatter());
+        leftAxis.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value >= 0 & value < 2.0) {
+                    return "T.T";
+                } else if (value >= 2.0 & value < 3.5) {
+                    return "-_-";
+                } else {
+                    return "^o^";
+                }
+            }
+        });
+        leftAxis.setEnabled(true);
+        leftAxis.setTextColor(Color.BLACK);
+        leftAxis.setDrawGridLines(false);
+        leftAxis.setGridColor(getResources().getColor(R.color.sag_green));
+
+        YAxis rightAxis = chart.getAxisRight();
+        rightAxis.setEnabled(false);
+
+        // don't forget to refresh the drawing
+        chart.invalidate();
+
     }
+
+    private void addEntry(double num){
+        LineData data = chart.getData();
+
+        if (data == null) {
+            data = new LineData();
+            chart.setData(data);
+        }
+
+        ILineDataSet set = data.getDataSetByIndex(0);
+
+        if (set == null) {
+            set = createSet();
+            data.addDataSet(set);
+        }
+
+        data.addEntry(new Entry((float)set.getEntryCount(), (float)num), 0);
+        data.notifyDataChanged();
+
+        // let the chart know it's data has changed
+        chart.notifyDataSetChanged();
+
+        chart.setVisibleXRangeMaximum(20);
+        // this automatically refreshes the chart (calls invalidate())
+        chart.moveViewTo(data.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
+    }
+
+    private LineDataSet createSet() {
+        LineDataSet set = new LineDataSet(null, "");
+        set.setLineWidth(2f);
+
+        set.setCircleRadius(2.5f);
+        set.setDrawCircleHole(true);
+        set.setCircleColor(getResources().getColor(R.color.sag_blue));
+        set.setDrawValues(false);
+        set.setColor(getResources().getColor(R.color.sag_blue));
+        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+//        set.setDrawCircles(false);
+
+        set.setHighLightColor(Color.rgb(190, 190, 190));
+
+        return set;
+    }
+
 
     private void StopRecord() {
         recording = false;
@@ -426,14 +558,16 @@ public class CameraActivity extends AppCompatActivity {
                         } else {
                             faceRecognitionResult.add(facialExpressionRecognition.get_emotion_value());
 
+
                             if (faceRecognitionResult.size() > 5) {
                                 float result_average = 0;
                                 for (int i = 0; i < faceRecognitionResult.size(); i++) {
                                     result_average += faceRecognitionResult.get(i);
                                 }
                                 result_average /= faceRecognitionResult.size();
+                                addEntry(result_average);
 
-                                editText.setText(editText.getText() + "\n" + facialExpressionRecognition.get_emotion_text(result_average) + " " + result_average);
+                                //editText.setText(editText.getText() + "\n" + facialExpressionRecognition.get_emotion_text(result_average) + " " + result_average);
 
                                 faceRecognitionResult.clear();
                             }

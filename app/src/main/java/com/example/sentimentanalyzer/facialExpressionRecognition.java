@@ -155,6 +155,21 @@ public class facialExpressionRecognition {
 
     public String get_emotion_text(float emotion_v) {
         String val = "";
+//        if (emotion_v >= 0 & emotion_v < 1.5) {
+//            val = "Surprise";
+//        } else if (emotion_v >= 0.5 & emotion_v < 1.5) {
+//            val = "Fear";
+//        } else if (emotion_v >= 1.5 & emotion_v < 2.5) {
+//            val = "Angry";
+//        } else if (emotion_v >= 2.5 & emotion_v < 3.5) {
+//            val = "Neutral";
+//        } else if (emotion_v >= 3.5 & emotion_v < 4.5) {
+//            val = "Sad";
+//        } else if (emotion_v >= 4.5 & emotion_v < 5.5) {
+//            val = "Disgust";
+//        } else {
+//            val = "Happy";
+//        }
         if (emotion_v >= 0 & emotion_v < 1.5) {
             val = "Surprise";
         } else if (emotion_v >= 0.5 & emotion_v < 1.5) {

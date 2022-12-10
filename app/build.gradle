@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.example.sentimentanalyzer'
-    compileSdk 30
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.example.sentimentanalyzer"
         minSdk 24
-        targetSdk 30
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -51,4 +51,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+
 }
