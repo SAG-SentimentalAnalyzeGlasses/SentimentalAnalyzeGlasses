@@ -326,21 +326,35 @@ public class CameraActivity extends AppCompatActivity {
 
     private void addEntry(double num){
         LineData data = chart.getData();
+//        LineData data1 = chart.getData();
+//        Log.v(LOGTAG, "chartData: " + data);
+//        Log.v(LOGTAG, "chartData:1 " + data1);
 
         if (data == null) {
             data = new LineData();
             chart.setData(data);
         }
+//        if (data1 == null) {
+//            data1 = new LineData();
+//            chart.setData(data1);
+//        }
 
         ILineDataSet set = data.getDataSetByIndex(0);
+        ILineDataSet set1 = data.getDataSetByIndex(1);
 
         if (set == null) {
-            set = createSet();
+            set = createSet(getResources().getColor(R.color.sag_blue));
             data.addDataSet(set);
+        }
+        if (set1 == null) {
+            set1 = createSet(getResources().getColor(R.color.sag_ginblue));
+            data.addDataSet(set1);
         }
 
         data.addEntry(new Entry((float)set.getEntryCount(), (float)num), 0);
+        data.addEntry(new Entry((float)set1.getEntryCount(), (float)num + 2), 1);
         data.notifyDataChanged();
+//        data1.notifyDataChanged();
 
         // let the chart know it's data has changed
         chart.notifyDataSetChanged();
@@ -350,15 +364,16 @@ public class CameraActivity extends AppCompatActivity {
         chart.moveViewTo(data.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
     }
 
-    private LineDataSet createSet() {
+    private LineDataSet createSet(int color) {
         LineDataSet set = new LineDataSet(null, "");
         set.setLineWidth(2f);
-
+//        R.color.sag_blue
+//        R.color.sag_ginblue
         set.setCircleRadius(2.5f);
         set.setDrawCircleHole(true);
-        set.setCircleColor(getResources().getColor(R.color.sag_blue));
+        set.setCircleColor(color);
         set.setDrawValues(false);
-        set.setColor(getResources().getColor(R.color.sag_blue));
+        set.setColor(color);
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 //        set.setDrawCircles(false);
 
@@ -367,6 +382,22 @@ public class CameraActivity extends AppCompatActivity {
         return set;
     }
 
+//    private LineDataSet createSet1() {
+//        LineDataSet set = new LineDataSet(null, "");
+//        set.setLineWidth(2f);
+//
+//        set.setCircleRadius(2.5f);
+//        set.setDrawCircleHole(true);
+//        set.setCircleColor(getResources().getColor(R.color.sag_ginblue));
+//        set.setDrawValues(false);
+//        set.setColor(getResources().getColor(R.color.sag_blue));
+//        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+////        set.setDrawCircles(false);
+//
+//        set.setHighLightColor(Color.rgb(190, 190, 190));
+//
+//        return set;
+//    }
 
     private void StopRecord() {
         recording = false;
