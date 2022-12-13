@@ -323,8 +323,7 @@ public class CameraActivity extends AppCompatActivity {
         chart.invalidate();
 
     }
-
-    private void addEntry(double num){
+    private void addEntry(double num1, double num2){
         LineData data = chart.getData();
 //        LineData data1 = chart.getData();
 //        Log.v(LOGTAG, "chartData: " + data);
@@ -351,8 +350,10 @@ public class CameraActivity extends AppCompatActivity {
             data.addDataSet(set1);
         }
 
-        data.addEntry(new Entry((float)set.getEntryCount(), (float)num), 0);
-        data.addEntry(new Entry((float)set1.getEntryCount(), (float)num + 2), 1);
+        data.addEntry(new Entry((float)set.getEntryCount(), (float)num1), 0);
+        if(num2 != -1) {
+            data.addEntry(new Entry((float) set1.getEntryCount(), (float) num2), 1);
+        }
         data.notifyDataChanged();
 //        data1.notifyDataChanged();
 
@@ -612,11 +613,12 @@ public class CameraActivity extends AppCompatActivity {
 
                             if (faceRecognitionResult.size() > 5) {
                                 float result_average = 0;
+                                float result_averageper4s = -1;
                                 for (int i = 0; i < faceRecognitionResult.size(); i++) {
                                     result_average += faceRecognitionResult.get(i);
                                 }
                                 result_average /= faceRecognitionResult.size();
-                                addEntry(result_average);
+                                addEntry(result_average, result_averageper4s);
 
                                 //editText.setText(editText.getText() + "\n" + facialExpressionRecognition.get_emotion_text(result_average) + " " + result_average);
 
