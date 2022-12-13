@@ -95,7 +95,7 @@ public class facialExpressionRecognition {
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public Mat recognizeImage(Mat mat_image) {
-        // rotaate it by 90 degree for proper prediction
+        // rotate it by 90 degree for proper prediction
         Core.flip(mat_image.t(), mat_image, 1);
 
         Mat grayscaleImage = new Mat();
@@ -112,6 +112,7 @@ public class facialExpressionRecognition {
         }
 
         Rect[] faceArray = faces.toArray();
+        emotion_v = 0;
 
         for (int i = 0; i < faceArray.length; i++) {
             Imgproc.rectangle(mat_image, faceArray[i].tl(), faceArray[i].br(), new Scalar(0, 255, 0, 255), 2);
@@ -127,11 +128,14 @@ public class facialExpressionRecognition {
 
             float[][] emotion = new float[1][1];
             interpreter.run(byteBuffer, emotion);
-            emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
+
+            if (faceArray.length == 1) {
+                emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
+            }
             Log.d("facial_expression", "Output: " + emotion_v);
-            String emotion_s = get_emotion_text(emotion_v);
-            Imgproc.putText(mat_image, emotion_s  + " (" + emotion_v + ")",
-                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y - 20), 1, 2, new Scalar(0, 0, 255, 150), 2);
+//            String emotion_s = get_emotion_text(emotion_v);
+//            Imgproc.putText(mat_image, emotion_s  + " (" + emotion_v + ")",
+//                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y - 20), 1, 2, new Scalar(0, 0, 255, 150), 2);
 
 
             // 이미지 추가 예시)  img = cv2.add(img1, img2)
@@ -155,21 +159,6 @@ public class facialExpressionRecognition {
 
     public String get_emotion_text(float emotion_v) {
         String val = "";
-//        if (emotion_v >= 0 & emotion_v < 1.5) {
-//            val = "Surprise";
-//        } else if (emotion_v >= 0.5 & emotion_v < 1.5) {
-//            val = "Fear";
-//        } else if (emotion_v >= 1.5 & emotion_v < 2.5) {
-//            val = "Angry";
-//        } else if (emotion_v >= 2.5 & emotion_v < 3.5) {
-//            val = "Neutral";
-//        } else if (emotion_v >= 3.5 & emotion_v < 4.5) {
-//            val = "Sad";
-//        } else if (emotion_v >= 4.5 & emotion_v < 5.5) {
-//            val = "Disgust";
-//        } else {
-//            val = "Happy";
-//        }
         if (emotion_v >= 0 & emotion_v < 1.5) {
             val = "Surprise";
         } else if (emotion_v >= 0.5 & emotion_v < 1.5) {

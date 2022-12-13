@@ -5,22 +5,32 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sag_green"
+    android:background="@color/sag_background"
     tools:context=".MainActivity">
 
     <org.opencv.android.JavaCameraView
         android:layout_width="match_parent"
         android:layout_height="411dp"
         android:id="@+id/opencv_surface_view"
-        opencv:show_fps="true"
+        opencv:show_fps="false"
         opencv:camera_id="any"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/textResult"
+    <TextView
+        android:id="@+id/textOutput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
+        android:textSize="10dp"
+        android:textColor="@color/sag_white"
+        app:layout_constraintBottom_toTopOf="@id/textError" />
+
+    <TextView
+        android:id="@+id/textError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/sag_warning"
         app:layout_constraintBottom_toTopOf="@id/recordBtn" />
 
     <androidx.appcompat.widget.AppCompatButton
@@ -30,28 +40,15 @@
         android:background="@drawable/button_shape"
         android:textAllCaps="false"
         android:text="Analyze Emotion"
-        android:textSize="30dp"
-        android:textColor="@color/sag_yellow"
+        android:textSize="25dp"
+        android:textColor="@color/sag_white"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_margin="10dp"/>
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="377dp"
-        tools:srcCompat="@drawable/none" />
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/LineChart"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         app:layout_constraintTop_toBottomOf="@id/opencv_surface_view"/>
-
-
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

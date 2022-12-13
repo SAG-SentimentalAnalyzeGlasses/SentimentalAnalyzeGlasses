@@ -25,6 +25,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,8 +40,10 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.IValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -67,12 +70,12 @@ public class CameraActivity extends AppCompatActivity {
     private Mat mRgba;
     private Mat mGray;
     private boolean recording = false;
-    private ArrayList<Float> faceRecognitionResult = new ArrayList<Float>();
 
     private Intent intent;
     private CameraBridgeViewBase mOpenCvCameraView;
-    private EditText editText;
-    private ImageView imageView;
+    private TextView textOutput;
+    private TextView textError;
+//    private ImageView imageView;
     private Button button;
     private SpeechRecognizer mRecognizer = SpeechRecognizer.createSpeechRecognizer(CameraActivity.this); // 새 SpeechRecognizer 를 만드는 팩토리 메서드
     private BackgroundThread mThread;
@@ -106,21 +109,19 @@ public class CameraActivity extends AppCompatActivity {
             String action = intent.getAction();
             if (ACTION_USB_PERMISSION.equals(action)) {
                 synchronized (this) {
-                    UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        if(device != null){
+                        if (device != null) {
                             //call method to set up device communication
                         }
-                    }
-                    else {
+                    } else {
                         Log.v(LOGTAG, "permission denied for device " + device);
                     }
                 }
             }
         }
     };
-
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -130,11 +131,12 @@ public class CameraActivity extends AppCompatActivity {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.v(LOGTAG, "OpenCV Loaded");
                     mOpenCvCameraView.enableView();
-                } break;
-                default:
-                {
+                }
+                break;
+                default: {
                     super.onManagerConnected(status);
-                } break;
+                }
+                break;
             }
         }
     };
@@ -143,7 +145,6 @@ public class CameraActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getSupportActionBar().setIcon(R.drawable.sag);
         getSupportActionBar().setDisplayUseLogoEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -151,7 +152,7 @@ public class CameraActivity extends AppCompatActivity {
 //        boolean havePermission = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 //            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+            requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
 //                havePermission = false;
 //            }
 //            if (checkSelfPermission(RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -182,8 +183,9 @@ public class CameraActivity extends AppCompatActivity {
 
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.opencv_surface_view);
-        editText = findViewById(R.id.textResult);
-        imageView = findViewById(R.id.imageView);
+        textOutput = findViewById(R.id.textOutput);
+        textError = findViewById(R.id.textError);
+//        imageView = findViewById(R.id.imageView);
         button = findViewById(R.id.recordBtn);
 //        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -192,15 +194,14 @@ public class CameraActivity extends AppCompatActivity {
         try {
             int inputSize = 48;
             facialExpressionRecognition = new facialExpressionRecognition(getAssets(), CameraActivity.this, "model300.tflite", inputSize);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             Log.d("CameraActivity", "Model is not loaded");
         }
 
         // RecognizerIntent 생성
         intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,getPackageName()); // 여분의 키
+        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName()); // 여분의 키
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag()); // 언어 설정
         }
@@ -213,22 +214,21 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (!recording) {   //녹음 시작
-                    mRecognizer.startListening(intent); // 듣기 시작
+//                    mRecognizer.startListening(intent); // 듣기 시작
 
                     recording = true;
                     button.setText("Stop");
                     // 화면 켜짐 유지
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-
-                    editText.setText("");
-                    faceRecognitionResult.clear();
+                    chart.clear();
+                    textOutput.setText("");
                     mThread = new BackgroundThread();
                     mThread.start();
                 } else {  //이미 녹음 중이면 녹음 중지
-                    mRecognizer.cancel();
                     StopRecord();
 
+                    textError.setText("");
                     mThread.interrupt(); // stop UI update
                 }
             }
@@ -236,15 +236,15 @@ public class CameraActivity extends AppCompatActivity {
 
         chart = (LineChart) findViewById(R.id.LineChart);
         chart.setDrawGridBackground(true);
-        chart.setBackgroundColor(getResources().getColor(R.color.sag_green));
-        chart.setGridBackgroundColor(getResources().getColor(R.color.sag_green));
+        chart.setBackgroundColor(getResources().getColor(R.color.sag_background));
+        chart.setGridBackgroundColor(getResources().getColor(R.color.sag_background));
         // description text
         chart.getDescription().setEnabled(true);
         Description des = chart.getDescription();
         des.setEnabled(true);
-        des.setText("Emotion");
-        des.setTextSize(15f);
-        des.setTextColor(getResources().getColor(R.color.teal_200));
+        des.setText("SAG");
+        des.setTextSize(5f);
+        des.setTextColor(getResources().getColor(R.color.sag_white));
 
 
         // touch gestures (false-비활성화)
@@ -264,7 +264,7 @@ public class CameraActivity extends AppCompatActivity {
         XAxis x1 = chart.getXAxis();
         x1.setDrawGridLines(false);
         x1.setDrawAxisLine(false);
-        x1.setTextColor(getResources().getColor(R.color.sag_green));
+        x1.setTextColor(getResources().getColor(R.color.sag_white));
         x1.setTextSize(1f);
         x1.setAvoidFirstLastClipping(true);
 
@@ -275,7 +275,7 @@ public class CameraActivity extends AppCompatActivity {
         l.setEnabled(true);
         l.setFormSize(10f); // set the size of the legend forms/shapes
         l.setTextSize(12f);
-        l.setTextColor(getResources().getColor(R.color.teal_200));
+        l.setTextColor(getResources().getColor(R.color.sag_white));
 
         //Y축
         YAxis leftAxis = chart.getAxisLeft();
@@ -298,22 +298,14 @@ public class CameraActivity extends AppCompatActivity {
                 } else {
                     return "Happy😄";
                 }
-
-//                if (value < 2.0) {
-//                    return "😭";
-//                } else if (value >= 2.0 & value < 3.0) {
-//                    return "-_-😭";
-//                } else {
-//                    return "^o^😭";
-//                }
             }
         });
         leftAxis.setGranularity(1.2f);
         leftAxis.setEnabled(true);
-        leftAxis.setTextColor(Color.BLACK);
+        leftAxis.setTextColor(getResources().getColor(R.color.sag_white));
         leftAxis.setTextSize(10f);
         leftAxis.setDrawGridLines(true);
-        leftAxis.setGridLineWidth(0.5f);
+        leftAxis.setGridLineWidth(0.3f);
         leftAxis.setGridColor(getResources().getColor(R.color.sag_white));
 
         YAxis rightAxis = chart.getAxisRight();
@@ -323,39 +315,31 @@ public class CameraActivity extends AppCompatActivity {
         chart.invalidate();
 
     }
-    private void addEntry(double num1, double num2){
-        LineData data = chart.getData();
-//        LineData data1 = chart.getData();
-//        Log.v(LOGTAG, "chartData: " + data);
-//        Log.v(LOGTAG, "chartData:1 " + data1);
 
+    private void addEntry(double num1, double num2) {
+        LineData data = chart.getData();
         if (data == null) {
             data = new LineData();
             chart.setData(data);
         }
-//        if (data1 == null) {
-//            data1 = new LineData();
-//            chart.setData(data1);
-//        }
 
         ILineDataSet set = data.getDataSetByIndex(0);
         ILineDataSet set1 = data.getDataSetByIndex(1);
 
         if (set == null) {
-            set = createSet(getResources().getColor(R.color.sag_blue));
+            set = createSet(getResources().getColor(R.color.sag_currentline), "Current");
             data.addDataSet(set);
         }
         if (set1 == null) {
-            set1 = createSet(getResources().getColor(R.color.sag_ginblue));
+            set1 = createSet(getResources().getColor(R.color.sag_cumulativeline), "Cumulative");
             data.addDataSet(set1);
         }
 
         data.addEntry(new Entry((float)set.getEntryCount(), (float)num1), 0);
-        if(num2 != -1) {
-            data.addEntry(new Entry((float) set1.getEntryCount(), (float) num2), 1);
+        if(set.getEntryCount() >= 5) {
+            data.addEntry(new Entry((float) set.getEntryCount()-1, (float) num2), 1);
         }
         data.notifyDataChanged();
-//        data1.notifyDataChanged();
 
         // let the chart know it's data has changed
         chart.notifyDataSetChanged();
@@ -365,42 +349,26 @@ public class CameraActivity extends AppCompatActivity {
         chart.moveViewTo(data.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
     }
 
-    private LineDataSet createSet(int color) {
-        LineDataSet set = new LineDataSet(null, "");
+    private LineDataSet createSet(int color, String name) {
+        LineDataSet set = new LineDataSet(null, name);
+//        set.set
+        set.setValueTextColor(getResources().getColor(R.color.sag_white));
+        int color1 = set.getHighLightColor();
+        Log.v(LOGTAG, "getHighLightColor: " + color1);
+        set.setHighLightColor(getResources().getColor(R.color.sag_white));
         set.setLineWidth(2f);
-//        R.color.sag_blue
-//        R.color.sag_ginblue
         set.setCircleRadius(2.5f);
         set.setDrawCircleHole(true);
         set.setCircleColor(color);
-        set.setDrawValues(false);
+        set.setDrawValues(true);
         set.setColor(color);
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-//        set.setDrawCircles(false);
-
-        set.setHighLightColor(Color.rgb(190, 190, 190));
 
         return set;
     }
 
-//    private LineDataSet createSet1() {
-//        LineDataSet set = new LineDataSet(null, "");
-//        set.setLineWidth(2f);
-//
-//        set.setCircleRadius(2.5f);
-//        set.setDrawCircleHole(true);
-//        set.setCircleColor(getResources().getColor(R.color.sag_ginblue));
-//        set.setDrawValues(false);
-//        set.setColor(getResources().getColor(R.color.sag_blue));
-//        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-////        set.setDrawCircles(false);
-//
-//        set.setHighLightColor(Color.rgb(190, 190, 190));
-//
-//        return set;
-//    }
-
     private void StopRecord() {
+        mRecognizer.cancel();
         recording = false;
         button.setText("Analyze Emotion");
         // 화면 켜짐 유지 끄기
@@ -455,7 +423,7 @@ public class CameraActivity extends AppCompatActivity {
                     message = "네트웍 타임아웃";
                     break;
                 case SpeechRecognizer.ERROR_NO_MATCH:
-                    Toast.makeText(getApplicationContext(), "인식할 수 없는 음성 또는 음성 입력 대기 중",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "인식할 수 없는 음성 또는 음성 입력 대기 중", Toast.LENGTH_SHORT).show();
                     mRecognizer.startListening(intent);
                     return;
                 case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
@@ -475,8 +443,8 @@ public class CameraActivity extends AppCompatActivity {
                     break;
             }
             StopRecord();
-            if(!message.equals(""))
-                Toast.makeText(getApplicationContext(), "에러 발생 : " + message,Toast.LENGTH_SHORT).show();
+            if (!message.equals(""))
+                Toast.makeText(getApplicationContext(), "에러 발생 : " + message, Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -484,11 +452,11 @@ public class CameraActivity extends AppCompatActivity {
             // 인식 결과가 준비되면 호출
             // 말을 하면 ArrayList에 단어를 넣고 textView에 단어를 이어줌
             ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-            String originText = editText.getText().toString();
+//            String originText = editText.getText().toString();
 
             // 인식 결과
-            String newText="";
-            for(int i = 0; i < matches.size() ; i++){
+            String newText = "";
+            for (int i = 0; i < matches.size(); i++) {
                 newText += matches.get(i);
             }
 
@@ -509,9 +477,9 @@ public class CameraActivity extends AppCompatActivity {
 
     private CameraBridgeViewBase.CvCameraViewListener2 cvCameraViewListener = new CameraBridgeViewBase.CvCameraViewListener2() {
         @Override
-        public void onCameraViewStarted(int width ,int height){
-            mRgba=new Mat(height,width, CvType.CV_8UC4);
-            mGray =new Mat(height,width,CvType.CV_8UC1);
+        public void onCameraViewStarted(int width, int height) {
+            mRgba = new Mat(height, width, CvType.CV_8UC4);
+            mGray = new Mat(height, width, CvType.CV_8UC1);
         }
 
         @Override
@@ -520,9 +488,9 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         @Override
-        public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame){
-            mRgba=inputFrame.rgba();
-            mGray=inputFrame.gray();
+        public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+            mRgba = inputFrame.rgba();
+            mGray = inputFrame.gray();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 mRgba = facialExpressionRecognition.recognizeImage(mRgba);
@@ -537,7 +505,7 @@ public class CameraActivity extends AppCompatActivity {
         super.onStart();
     }
 
-    protected List<?extends CameraBridgeViewBase> getCameraViewList() {
+    protected List<? extends CameraBridgeViewBase> getCameraViewList() {
         return Collections.singletonList(mOpenCvCameraView);
     }
 
@@ -546,7 +514,7 @@ public class CameraActivity extends AppCompatActivity {
         if (cameraViews == null) {
             return;
         }
-        for (CameraBridgeViewBase cameraBridgeViewBase: cameraViews) {
+        for (CameraBridgeViewBase cameraBridgeViewBase : cameraViews) {
             if (cameraBridgeViewBase != null) {
                 cameraBridgeViewBase.setCameraPermissionGranted();
             }
@@ -556,22 +524,21 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (OpenCVLoader.initDebug()){
+        if (OpenCVLoader.initDebug()) {
             //if load success
-            Log.d(LOGTAG,"Opencv initialization is done");
+            Log.d(LOGTAG, "Opencv initialization is done");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }
-        else{
+        } else {
             //if not loaded
-            Log.d(LOGTAG,"Opencv is not loaded. try again");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0,this,mLoaderCallback);
+            Log.d(LOGTAG, "Opencv is not loaded. try again");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (mOpenCvCameraView !=null){
+        if (mOpenCvCameraView != null) {
             mOpenCvCameraView.disableView();
         }
     }
@@ -594,33 +561,43 @@ public class CameraActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+    @Override
+    public void onBackPressed() {
+        StopRecord();
+        finish();
+    }
 
     // thread for update UI
     class BackgroundThread extends Thread {
+        private ArrayList<Float> faceRecognitionResult;
+
         @Override
         public void run() {
-            while(!Thread.currentThread().isInterrupted()) {
+            faceRecognitionResult = new ArrayList<Float>();
+
+            while (!Thread.currentThread().isInterrupted()) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         float emotion_v = facialExpressionRecognition.get_emotion_value();
 
-                        if (emotion_v == 0.0) {
+                        if (emotion_v == 0) {
+                            textError.setText("얼굴을 인식할 수 없거나 2개 이상의 얼굴 존재");
                             faceRecognitionResult.clear();
                         } else {
+                            textError.setText("");
                             faceRecognitionResult.add(facialExpressionRecognition.get_emotion_value());
-
 
                             if (faceRecognitionResult.size() > 5) {
                                 float result_average = 0;
-                                float result_averageper4s = -1;
+                                float result_averageper4s = 2f;
                                 for (int i = 0; i < faceRecognitionResult.size(); i++) {
                                     result_average += faceRecognitionResult.get(i);
                                 }
                                 result_average /= faceRecognitionResult.size();
                                 addEntry(result_average, result_averageper4s);
 
-                                //editText.setText(editText.getText() + "\n" + facialExpressionRecognition.get_emotion_text(result_average) + " " + result_average);
+                                textOutput.setText("Current Value: " + result_average + " (" + facialExpressionRecognition.get_emotion_text(result_average) + ")");
 
                                 faceRecognitionResult.clear();
                             }
@@ -630,7 +607,6 @@ public class CameraActivity extends AppCompatActivity {
 
                 SystemClock.sleep(200);
             }
-            faceRecognitionResult.clear();
         }
     }
 }

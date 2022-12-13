@@ -2,11 +2,11 @@
     <!-- Base application theme. -->
     <style name="Theme.SentimentAnalyzer" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/sag_blue</item>
-        <item name="colorPrimaryVariant">@color/sag_green</item>
+        <item name="colorPrimary">@color/sag_background</item>
+        <item name="colorPrimaryVariant">@color/sag_background</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:statusBarColor" tools:targetApi="lollipop">@color/sag_background</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>
