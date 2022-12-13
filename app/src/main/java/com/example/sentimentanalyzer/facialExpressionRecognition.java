@@ -138,11 +138,6 @@ public class facialExpressionRecognition {
 //                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y - 20), 1, 2, new Scalar(0, 0, 255, 150), 2);
 
 
-            // 이미지 추가 예시)  img = cv2.add(img1, img2)
-//            String imgpath = "src/main/res/drawable/soso.png";
-//            Bitmap bm = BitmapFactory.decodeFile(imgpath);
-//            Mat emotion_result = new Mat();
-//            Utils.bitmapToMat(bm, emotion_result);
 
 
 
