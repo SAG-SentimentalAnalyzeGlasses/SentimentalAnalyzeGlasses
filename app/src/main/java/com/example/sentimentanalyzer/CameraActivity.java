@@ -146,9 +146,11 @@ public class CameraActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-        getSupportActionBar().setIcon(R.drawable.sag);
-        getSupportActionBar().setDisplayUseLogoEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        //TODO: 필요없으면 지우기
+//        getSupportActionBar().setIcon(R.drawable.sag);
+//        getSupportActionBar().setDisplayUseLogoEnabled(true);
+//        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
 //        boolean havePermission = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -238,15 +240,15 @@ public class CameraActivity extends AppCompatActivity {
 
         chart = (LineChart) findViewById(R.id.LineChart);
         chart.setDrawGridBackground(true);
-        chart.setBackgroundColor(getResources().getColor(R.color.sag_background));
-        chart.setGridBackgroundColor(getResources().getColor(R.color.sag_background));
+        chart.setBackgroundColor(getResources().getColor(R.color.sag_white));
+        chart.setGridBackgroundColor(getResources().getColor(R.color.sag_white));
         // description text
         chart.getDescription().setEnabled(true);
         Description des = chart.getDescription();
         des.setEnabled(true);
         des.setText("SAG");
         des.setTextSize(5f);
-        des.setTextColor(getResources().getColor(R.color.sag_white));
+        des.setTextColor(getResources().getColor(R.color.sag_background));
 
 
         // touch gestures (false-비활성화)
@@ -266,7 +268,7 @@ public class CameraActivity extends AppCompatActivity {
         XAxis x1 = chart.getXAxis();
         x1.setDrawGridLines(false);
         x1.setDrawAxisLine(false);
-        x1.setTextColor(getResources().getColor(R.color.sag_white));
+        x1.setTextColor(getResources().getColor(R.color.sag_background));
         x1.setTextSize(1f);
         x1.setAvoidFirstLastClipping(true);
 
@@ -277,7 +279,7 @@ public class CameraActivity extends AppCompatActivity {
         l.setEnabled(true);
         l.setFormSize(10f); // set the size of the legend forms/shapes
         l.setTextSize(12f);
-        l.setTextColor(getResources().getColor(R.color.sag_white));
+        l.setTextColor(getResources().getColor(R.color.sag_green));
 
         //Y축
         YAxis leftAxis = chart.getAxisLeft();
@@ -304,11 +306,11 @@ public class CameraActivity extends AppCompatActivity {
         });
         leftAxis.setGranularity(1.2f);
         leftAxis.setEnabled(true);
-        leftAxis.setTextColor(getResources().getColor(R.color.sag_white));
+        leftAxis.setTextColor(getResources().getColor(R.color.sag_background));
         leftAxis.setTextSize(10f);
         leftAxis.setDrawGridLines(true);
         leftAxis.setGridLineWidth(0.3f);
-        leftAxis.setGridColor(getResources().getColor(R.color.sag_white));
+        leftAxis.setGridColor(getResources().getColor(R.color.sag_background));
 
         YAxis rightAxis = chart.getAxisRight();
         rightAxis.setEnabled(false);
@@ -329,11 +331,11 @@ public class CameraActivity extends AppCompatActivity {
         ILineDataSet set1 = data.getDataSetByIndex(1);
 
         if (set == null) {
-            set = createSet(getResources().getColor(R.color.sag_currentline), "Current");
+            set = createSet(getResources().getColor(R.color.sag_background), "Current");
             data.addDataSet(set);
         }
         if (set1 == null) {
-            set1 = createSet(getResources().getColor(R.color.sag_cumulativeline), "Cumulative");
+            set1 = createSet(getResources().getColor(R.color.sag_background), "Cumulative");
             data.addDataSet(set1);
         }
 
