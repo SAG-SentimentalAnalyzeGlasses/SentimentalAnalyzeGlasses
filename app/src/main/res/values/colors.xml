@@ -9,14 +9,14 @@
     <color name="white">#FFFFFFFF</color>
     <color name="sag_blue">#78DBFF</color>
     <color name="sag_ginblue">#6699FF</color>
-    <color name="sag_green">#E6FFD4</color>
+    <color name="sag_green">#0D7738</color>
     <color name="sag_gingreen">#AAFAC2</color>
 
 
     <color name="sag_yellow">#FFD00B</color>
     <color name="sag_highlight">#BEBEBE</color>
     <color name="sag_warning">#FF0000</color>
-    <color name="sag_white">#CED1D8</color>
+    <color name="sag_white">#FFFFFF</color>
     <color name="sag_background">#02121D</color>
     <color name="sag_currentline">#3EE12A</color>
     <color name="sag_cumulativeline">#1266FF</color>

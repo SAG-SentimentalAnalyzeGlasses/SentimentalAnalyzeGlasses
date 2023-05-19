@@ -3,6 +3,7 @@ package com.example.sentimentanalyzer;
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.RECORD_AUDIO;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -208,9 +209,9 @@ public class CameraActivity extends AppCompatActivity {
 
         //감정 이모지 변경
 
-
         // 버튼 클릭 시 객체에 Context와 listener를 할당
         button.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
             @Override
             public void onClick(View view) {
                 if (!recording) {   //녹음 시작
@@ -218,6 +219,7 @@ public class CameraActivity extends AppCompatActivity {
 
                     recording = true;
                     button.setText("Stop");
+                    button.setBackgroundColor(R.color.sag_background);
                     // 화면 켜짐 유지
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -367,10 +369,12 @@ public class CameraActivity extends AppCompatActivity {
         return set;
     }
 
+    @SuppressLint("ResourceAsColor")
     private void StopRecord() {
         mRecognizer.cancel();
         recording = false;
-        button.setText("Analyze Emotion");
+        button.setBackgroundColor(R.color.sag_green);
+        button.setText("Start Analyze Emotion");
         // 화면 켜짐 유지 끄기
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
