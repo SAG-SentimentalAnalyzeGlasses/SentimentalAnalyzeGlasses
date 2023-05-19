@@ -1,0 +1,2 @@
+ninja: Entering directory `/Users/hyegyunyim/GitHub/SentimentalAnalyzeGlasses/OpenCV/.cxx/Debug/e5n1i301/arm64-v8a'
+ninja: no work to do.
