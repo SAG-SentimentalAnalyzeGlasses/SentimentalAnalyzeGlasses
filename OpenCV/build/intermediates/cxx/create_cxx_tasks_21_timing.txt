@@ -31,8 +31,25 @@ create_cxx_tasks
   create-initial-cxx-model 28ms
 create_cxx_tasks completed in 29ms
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 # C/C++ build system timings
 create_cxx_tasks
   create-initial-cxx-model 18ms
 create_cxx_tasks completed in 19ms
 
+# C/C++ build system timings
+create_cxx_tasks
+  create-initial-cxx-model 20ms
+create_cxx_tasks completed in 22ms
+
+=======
+>>>>>>> parent of a0b355d (app logo design)
+=======
+>>>>>>> parent of a0b355d (app logo design)
+=======
+>>>>>>> parent of a0b355d (app logo design)
+=======
+>>>>>>> parent of a0b355d (app logo design)
