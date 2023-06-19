@@ -3,8 +3,9 @@ package com.example.sentimentanalyzer;
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.RECORD_AUDIO;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -29,9 +30,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -39,11 +40,8 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IAxisValueFormatter;
-import com.github.mikephil.charting.formatter.IValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -52,19 +50,19 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.text.DecimalFormat;
+import java.io.InputStreamReader;
+import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
 public class CameraActivity extends AppCompatActivity {
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 200;
-    private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 201;
+    private long backKeyPressedTime = 0;
     private static String LOGTAG = "OpenCV_Log";
     private facialExpressionRecognition facialExpressionRecognition;
     private Mat mRgba;
@@ -73,12 +71,17 @@ public class CameraActivity extends AppCompatActivity {
 
     private Intent intent;
     private CameraBridgeViewBase mOpenCvCameraView;
+    //    private EditText editText;
     private TextView textOutput;
     private TextView textError;
-//    private ImageView imageView;
     private Button button;
     private SpeechRecognizer mRecognizer = SpeechRecognizer.createSpeechRecognizer(CameraActivity.this); // 새 SpeechRecognizer 를 만드는 팩토리 메서드
     private BackgroundThread mThread;
+    private VoiceThread sThread;
+    private boolean isReadyToSend = false;
+    private String currentVoiceInput;
+    private float voice_v = 0;
+    private boolean isVoiceValueUpdated = false;
 
     //Graph
     private LineChart chart;
@@ -101,27 +104,27 @@ public class CameraActivity extends AppCompatActivity {
 
 
     /*엑세스 권한 런타임*/
-    private static final String ACTION_USB_PERMISSION =
-            "com.android.example.USB_PERMISSION";
-    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
-
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (ACTION_USB_PERMISSION.equals(action)) {
-                synchronized (this) {
-                    UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        if (device != null) {
-                            //call method to set up device communication
-                        }
-                    } else {
-                        Log.v(LOGTAG, "permission denied for device " + device);
-                    }
-                }
-            }
-        }
-    };
+//    private static final String ACTION_USB_PERMISSION =
+//            "com.android.example.USB_PERMISSION";
+//    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+//
+//        public void onReceive(Context context, Intent intent) {
+//            String action = intent.getAction();
+//            if (ACTION_USB_PERMISSION.equals(action)) {
+//                synchronized (this) {
+//                    UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+//
+//                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+//                        if (device != null) {
+//                            //call method to set up device communication
+//                        }
+//                    } else {
+//                        Log.v(LOGTAG, "permission denied for device " + device);
+//                    }
+//                }
+//            }
+//        }
+//    };
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -145,32 +148,10 @@ public class CameraActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-        getSupportActionBar().setIcon(R.drawable.sag);
-        getSupportActionBar().setDisplayUseLogoEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-//        boolean havePermission = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
-//                havePermission = false;
-//            }
-//            if (checkSelfPermission(RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-//                requestPermissions(new String[]{RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
-//            }
         }
-//        if (havePermission) {
-//            onCameraPermissionGranted();
-//        }
-
-//        // 안드로이드 버전이 6.0 이상
-//        if(Build.VERSION.SDK_INT >= 23){
-//            //인터넷이나 녹음 권한이 없으면 권한 요청
-//            if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_DENIED
-//                    || ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED
-//                    || ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-//                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET, Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA},PERMISSION);
-//        }
 
         /*usb 카메라*/
 //        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
@@ -185,7 +166,6 @@ public class CameraActivity extends AppCompatActivity {
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.opencv_surface_view);
         textOutput = findViewById(R.id.textOutput);
         textError = findViewById(R.id.textError);
-//        imageView = findViewById(R.id.imageView);
         button = findViewById(R.id.recordBtn);
 //        mOpenCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -193,7 +173,7 @@ public class CameraActivity extends AppCompatActivity {
         mRecognizer.setRecognitionListener(listener); // 리스너 설정
         try {
             int inputSize = 48;
-            facialExpressionRecognition = new facialExpressionRecognition(getAssets(), CameraActivity.this, "model300.tflite", inputSize);
+            facialExpressionRecognition = new facialExpressionRecognition(getAssets(), CameraActivity.this, "model.tflite", inputSize);
         } catch (IOException e) {
             e.printStackTrace();
             Log.d("CameraActivity", "Model is not loaded");
@@ -206,15 +186,12 @@ public class CameraActivity extends AppCompatActivity {
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag()); // 언어 설정
         }
 
-        //감정 이모지 변경
-
-
         // 버튼 클릭 시 객체에 Context와 listener를 할당
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (!recording) {   //녹음 시작
-//                    mRecognizer.startListening(intent); // 듣기 시작
+                    mRecognizer.startListening(intent); // 듣기 시작
 
                     recording = true;
                     button.setText("Stop");
@@ -222,29 +199,32 @@ public class CameraActivity extends AppCompatActivity {
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
                     chart.clear();
+//                    editText.setText("");
                     textOutput.setText("");
+                    currentVoiceInput = "";
                     mThread = new BackgroundThread();
+                    sThread = new VoiceThread();
                     mThread.start();
+                    sThread.start();
                 } else {  //이미 녹음 중이면 녹음 중지
                     StopRecord();
 
                     textError.setText("");
-                    mThread.interrupt(); // stop UI update
                 }
             }
         });
 
         chart = (LineChart) findViewById(R.id.LineChart);
         chart.setDrawGridBackground(true);
-        chart.setBackgroundColor(getResources().getColor(R.color.sag_background));
-        chart.setGridBackgroundColor(getResources().getColor(R.color.sag_background));
+        chart.setBackgroundColor(getResources().getColor(R.color.sag_green));
+        chart.setGridBackgroundColor(getResources().getColor(R.color.sag_green));
         // description text
         chart.getDescription().setEnabled(true);
         Description des = chart.getDescription();
         des.setEnabled(true);
         des.setText("SAG");
         des.setTextSize(5f);
-        des.setTextColor(getResources().getColor(R.color.sag_white));
+        des.setTextColor(getResources().getColor(R.color.sag_background));
 
 
         // touch gestures (false-비활성화)
@@ -264,7 +244,7 @@ public class CameraActivity extends AppCompatActivity {
         XAxis x1 = chart.getXAxis();
         x1.setDrawGridLines(false);
         x1.setDrawAxisLine(false);
-        x1.setTextColor(getResources().getColor(R.color.sag_white));
+        x1.setTextColor(getResources().getColor(R.color.sag_background));
         x1.setTextSize(1f);
         x1.setAvoidFirstLastClipping(true);
 
@@ -275,7 +255,7 @@ public class CameraActivity extends AppCompatActivity {
         l.setEnabled(true);
         l.setFormSize(10f); // set the size of the legend forms/shapes
         l.setTextSize(12f);
-        l.setTextColor(getResources().getColor(R.color.sag_white));
+        l.setTextColor(getResources().getColor(R.color.sag_background));
 
         //Y축
         YAxis leftAxis = chart.getAxisLeft();
@@ -283,30 +263,34 @@ public class CameraActivity extends AppCompatActivity {
         leftAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                if (value >= 0 & value < 1.5) {
-                    return "Surprise😲";
-                } else if (value >= 0.5 & value < 1.5) {
-                    return "Fear😨";
-                } else if (value >= 1.5 & value < 2.5) {
+                if (value == 0.0f) {
                     return "Angry😠";
-                } else if (value >= 2.5 & value < 3.5) {
-                    return "Neutral😐";
-                } else if (value >= 3.5 & value < 4.5) {
-                    return "Sad😢";
-                } else if (value >= 4.5 & value < 5.5) {
+                } else if (value >= 1.0f && value <= 1.0f) {
                     return "Disgust😫";
-                } else {
+                } else if (value >= 2.0f && value <= 2.0f) {
+                    return "Fear😨";
+                } else if (value >= 3.0f && value <= 3.0f) {
                     return "Happy😄";
+                } else if (value >= 4.0f && value <= 4.0f) {
+                    return "Neutral😐";
+                } else if (value >= 5.0f && value <= 5.0f) {
+                    return "Sad😢";
+                } else if (value >= 6.0f && value <= 6.0f) {
+                    return "Surprise😲";
+                } else {
+                    return Float.toString(value);
                 }
             }
         });
-        leftAxis.setGranularity(1.2f);
+        leftAxis.setGranularity(1.0f);
         leftAxis.setEnabled(true);
-        leftAxis.setTextColor(getResources().getColor(R.color.sag_white));
+        leftAxis.setTextColor(getResources().getColor(R.color.sag_background));
         leftAxis.setTextSize(10f);
         leftAxis.setDrawGridLines(true);
         leftAxis.setGridLineWidth(0.3f);
-        leftAxis.setGridColor(getResources().getColor(R.color.sag_white));
+        leftAxis.setGridColor(getResources().getColor(R.color.sag_background));
+        leftAxis.setAxisMaximum(6.0f);
+        leftAxis.setAxisMinimum(0.0f);
 
         YAxis rightAxis = chart.getAxisRight();
         rightAxis.setEnabled(false);
@@ -327,16 +311,16 @@ public class CameraActivity extends AppCompatActivity {
         ILineDataSet set1 = data.getDataSetByIndex(1);
 
         if (set == null) {
-            set = createSet(getResources().getColor(R.color.sag_currentline), "Current");
+            set = createSet(getResources().getColor(R.color.sag_background), "Video");
             data.addDataSet(set);
         }
         if (set1 == null) {
-            set1 = createSet(getResources().getColor(R.color.sag_cumulativeline), "Cumulative");
+            set1 = createSet(getResources().getColor(R.color.sag_white), "Video + Voice");
             data.addDataSet(set1);
         }
 
         data.addEntry(new Entry((float)set.getEntryCount(), (float)num1), 0);
-        if(set.getEntryCount() >= 5) {
+        if(num2 != -1) {
             data.addEntry(new Entry((float) set.getEntryCount()-1, (float) num2), 1);
         }
         data.notifyDataChanged();
@@ -360,17 +344,26 @@ public class CameraActivity extends AppCompatActivity {
         set.setCircleRadius(2.5f);
         set.setDrawCircleHole(true);
         set.setCircleColor(color);
-        set.setDrawValues(true);
+        set.setDrawValues(false);
         set.setColor(color);
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         return set;
     }
+    @SuppressLint("ResourceAsColor")
 
     private void StopRecord() {
+//        socket.close();
         mRecognizer.cancel();
         recording = false;
-        button.setText("Analyze Emotion");
+
+        if (mThread != null) {
+            mThread.interrupt(); // stop UI update
+        }
+        if (sThread != null) {
+            sThread.interrupt();
+        }
+        button.setText("Start Analyze Emotion");
         // 화면 켜짐 유지 끄기
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -423,7 +416,7 @@ public class CameraActivity extends AppCompatActivity {
                     message = "네트웍 타임아웃";
                     break;
                 case SpeechRecognizer.ERROR_NO_MATCH:
-                    Toast.makeText(getApplicationContext(), "인식할 수 없는 음성 또는 음성 입력 대기 중", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getApplicationContext(), "인식할 수 없는 음성 또는 음성 입력 대기 중", Toast.LENGTH_SHORT).show();
                     mRecognizer.startListening(intent);
                     return;
                 case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
@@ -452,15 +445,19 @@ public class CameraActivity extends AppCompatActivity {
             // 인식 결과가 준비되면 호출
             // 말을 하면 ArrayList에 단어를 넣고 textView에 단어를 이어줌
             ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-//            String originText = editText.getText().toString();
 
             // 인식 결과
-            String newText = "";
             for (int i = 0; i < matches.size(); i++) {
-                newText += matches.get(i);
+                currentVoiceInput += matches.get(i);
             }
 
-//            editText.setText(originText + newText + " ");	//기존의 text에 인식 결과를 이어붙임
+            if (!currentVoiceInput.equals("")) {
+                currentVoiceInput = currentVoiceInput.replace("\n", "");
+                isReadyToSend = true;
+//                editText.setText(currentVoiceInput);
+            } else {
+//                editText.setText("");
+            }
             mRecognizer.startListening(intent);    //녹음버튼을 누를 때까지 계속 녹음해야 하므로 녹음 재개
         }
 
@@ -563,43 +560,93 @@ public class CameraActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        StopRecord();
-        finish();
+        if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
+            backKeyPressedTime = System.currentTimeMillis();
+            Toast.makeText(this, "\'뒤로\' 버튼 한 번 더 누르시면 종료됩니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
+            StopRecord();
+            finish();
+        }
     }
 
-    // thread for update UI
+
+    // thread for UI update
     class BackgroundThread extends Thread {
-        private ArrayList<Float> faceRecognitionResult;
+        private int cycle;
+        private int[] countEmotion;
 
         @Override
         public void run() {
-            faceRecognitionResult = new ArrayList<Float>();
+            cycle = 0;
+            countEmotion = new int[7];
 
             while (!Thread.currentThread().isInterrupted()) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        float emotion_v = facialExpressionRecognition.get_emotion_value();
+                        int emotion_v = facialExpressionRecognition.get_emotion_value();
 
-                        if (emotion_v == 0) {
+                        if (emotion_v == -1) {
                             textError.setText("얼굴을 인식할 수 없거나 2개 이상의 얼굴 존재");
-                            faceRecognitionResult.clear();
+                            cycle = 0;
+                            countEmotion = new int[7];
                         } else {
                             textError.setText("");
-                            faceRecognitionResult.add(facialExpressionRecognition.get_emotion_value());
 
-                            if (faceRecognitionResult.size() > 5) {
-                                float result_average = 0;
-                                float result_averageper4s = 2f;
-                                for (int i = 0; i < faceRecognitionResult.size(); i++) {
-                                    result_average += faceRecognitionResult.get(i);
+                            countEmotion[emotion_v]++;
+
+                            if (++cycle > 4) {
+//                                float result_average = 0;
+//                                float result_averageper4s = 2f;
+//                                for (int i = 0; i < faceRecognitionResult.size(); i++) {
+//                                    result_average += faceRecognitionResult.get(i);
+//                                }
+//                                result_average /= faceRecognitionResult.size();
+
+                                int maxEmotionIndex = 0;
+                                for (int i = 0; i < countEmotion.length; i++) {
+                                    maxEmotionIndex = countEmotion[i] > countEmotion[maxEmotionIndex] ? i : maxEmotionIndex;
                                 }
-                                result_average /= faceRecognitionResult.size();
-                                addEntry(result_average, result_averageper4s);
+                                int voiceSentimentIndex = -1;
+                                if (isVoiceValueUpdated) {
+                                    isVoiceValueUpdated = false;
 
-                                textOutput.setText("Current Value: " + result_average + " (" + facialExpressionRecognition.get_emotion_text(result_average) + ")");
+                                    if (voice_v < 0.43068436) {
+                                        if (maxEmotionIndex == 0 | maxEmotionIndex == 3) {
+                                            if (voice_v < 0.4) {
+                                                voiceSentimentIndex = 5;
+                                            } else {
+                                                voiceSentimentIndex = 6;
+                                            }
+                                        } else if (maxEmotionIndex == 1 | maxEmotionIndex == 2 | maxEmotionIndex == 4 | maxEmotionIndex == 5) {
+                                            if (voice_v < 0.4) {
+                                                voiceSentimentIndex = 5;
+                                            } else {
+                                                voiceSentimentIndex = Math.round(facialExpressionRecognition.get_emotion_value());
+                                            }
+                                        } else {
+                                            if (voice_v < 0.4) {
+                                                voiceSentimentIndex = Math.round(facialExpressionRecognition.get_emotion_value());
+                                            } else {
+                                                voiceSentimentIndex = 6;
+                                            }
+                                        }
+                                    } else {
+                                        voiceSentimentIndex = maxEmotionIndex;
+                                    }
+                                }
+                                addEntry(maxEmotionIndex, voiceSentimentIndex);
 
-                                faceRecognitionResult.clear();
+                                if (voiceSentimentIndex == -1) {
+                                    textOutput.setText("Current image: " + facialExpressionRecognition.get_emotion_text(maxEmotionIndex) + " (Probability: " + facialExpressionRecognition.get_emotion_probability() + ")");
+                                } else {
+                                    textOutput.setText("Current image: " + facialExpressionRecognition.get_emotion_text(maxEmotionIndex) + ", voice: " + facialExpressionRecognition.get_emotion_text(voiceSentimentIndex));
+                                }
+                                cycle = 0;
+                                countEmotion = new int[7];
                             }
                         }
                     }
@@ -609,4 +656,36 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
     }
+
+    // thread for voice input
+    class VoiceThread extends Thread {
+        private Socket socket;
+
+        @Override
+        public void run() {
+            try {
+                socket = new Socket("192.168.0.2", 8888);
+
+                while (!Thread.currentThread().isInterrupted()) {
+                    if (isReadyToSend) {
+                        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        out.writeUTF(currentVoiceInput);
+                        String text_v = in.readLine();
+
+                        voice_v = Float.parseFloat(text_v);
+                        isVoiceValueUpdated = true;
+
+                        currentVoiceInput = "";
+                        isReadyToSend = false;
+                    }
+                }
+                socket.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            isReadyToSend = false;
+        }
+    }
 }
+

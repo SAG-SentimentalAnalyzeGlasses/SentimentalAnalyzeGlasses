@@ -48,7 +48,8 @@ public class facialExpressionRecognition {
     private int width = 0;
     private GpuDelegate gpuDelegate = null;
     private CascadeClassifier cascadeClassifier;
-    private float emotion_v;
+    private int emotion_index;
+    private float emotion_probability;
 
     facialExpressionRecognition(AssetManager assetManager, Context context, String modelPath, int inputSize) throws IOException {
         INPUT_SIZE = inputSize;
@@ -112,7 +113,10 @@ public class facialExpressionRecognition {
         }
 
         Rect[] faceArray = faces.toArray();
-        emotion_v = 0;
+
+        if (faceArray.length != 1) {
+            emotion_index = -1;
+        }
 
         for (int i = 0; i < faceArray.length; i++) {
             Imgproc.rectangle(mat_image, faceArray[i].tl(), faceArray[i].br(), new Scalar(0, 255, 0, 255), 2);
@@ -126,50 +130,29 @@ public class facialExpressionRecognition {
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 48, 48, false);
             ByteBuffer byteBuffer = convertBitmapToByteBuffer(scaledBitmap);
 
-            float[][] emotion = new float[1][1];
+            float[][] emotion = new float[1][7];
             interpreter.run(byteBuffer, emotion);
 
             if (faceArray.length == 1) {
-                emotion_v = (float)Array.get(Array.get(emotion, 0), 0);
+                int max_index = 0;
+                float max_probability = 0;
+
+                for (int j = 0; j < emotion[0].length; j++) {
+                    if (emotion[0][j] > max_probability) {
+                        max_probability = emotion[0][j];
+                        max_index = j;
+                    }
+                }
+
+                emotion_index = max_index;
+                emotion_probability = max_probability;
             }
-            Log.d("facial_expression", "Output: " + emotion_v);
-//            String emotion_s = get_emotion_text(emotion_v);
-//            Imgproc.putText(mat_image, emotion_s  + " (" + emotion_v + ")",
-//                    new Point((int)faceArray[i].tl().x + 10, (int)faceArray[i].tl().y - 20), 1, 2, new Scalar(0, 0, 255, 150), 2);
-
-
-
-
-
-
-//            Core.add(mat_image, emotion_result, mat_image);
-
         }
 
-        // rotaate mat_image -90 degree
+        // rotate mat_image -90 degree
         Core.flip(mat_image.t(), mat_image, 0);
 
         return mat_image;
-    }
-
-    public String get_emotion_text(float emotion_v) {
-        String val = "";
-        if (emotion_v >= 0 & emotion_v < 1.5) {
-            val = "Surprise";
-        } else if (emotion_v >= 0.5 & emotion_v < 1.5) {
-            val = "Fear";
-        } else if (emotion_v >= 1.5 & emotion_v < 2.5) {
-            val = "Angry";
-        } else if (emotion_v >= 2.5 & emotion_v < 3.5) {
-            val = "Neutral";
-        } else if (emotion_v >= 3.5 & emotion_v < 4.5) {
-            val = "Sad";
-        } else if (emotion_v >= 4.5 & emotion_v < 5.5) {
-            val = "Disgust";
-        } else {
-            val = "Happy";
-        }
-        return val;
     }
 
     private ByteBuffer convertBitmapToByteBuffer(Bitmap scaledBitmap) {
@@ -202,11 +185,69 @@ public class facialExpressionRecognition {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
-    public float get_emotion_value() {
-        return emotion_v;
+    public float get_emotion_probability() {
+        return emotion_probability;
+    }
+
+    public int get_emotion_value() {
+        return emotion_index;
+    }
+
+    public int get_emotion_value(String emotion_t) {
+        int type;
+        if (emotion_t.equals("Surprise")) {
+            type = 0;
+        } else if (emotion_t.equals("Fear")) {
+            type = 1;
+        } else if (emotion_t.equals("Angry")) {
+            type = 2;
+        } else if (emotion_t.equals("Neutral")) {
+            type = 3;
+        } else if (emotion_t.equals("Sad")) {
+            type = 4;
+        } else if (emotion_t.equals(("Disgust"))) {
+            type = 5;
+        } else if (emotion_t.equals("Happy")) {
+            type = 6;
+        } else {
+            type = -1;
+        }
+        return type;
     }
 
     public String get_emotion_text() {
-        return get_emotion_text(emotion_v);
+        return get_emotion_text(emotion_index);
+    }
+
+    public String get_emotion_text(int emotion_index) {
+        String val = "";
+
+        switch(emotion_index) {
+            case 0:
+                val = "Angry";
+                break;
+            case 1:
+                val = "Disgust";
+                break;
+            case 2:
+                val = "Fear";
+                break;
+            case 3:
+                val = "Happy";
+                break;
+            case 4:
+                val = "Neutral";
+                break;
+            case 5:
+                val = "Sad";
+                break;
+            case 6:
+                val = "Surprise";
+                break;
+            default:
+                val = "Error";
+        }
+
+        return val;
     }
 }
